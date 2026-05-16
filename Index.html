@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Comisiones de Antonio</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .login-screen, .app-screen {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="password"], input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        .btn-success {
+            background-color: #4CAF50;
+        }
+        .btn-success:hover {
+            background-color: #45a049;
+        }
+        .config-section {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            color: #666;
+        }
+        .config-body {
+            display: none;
+            margin-top: 10px;
+        }
+        .metric-card {
+            background: #f8fafc;
+            border-left: 5px solid #2196F3;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .metric-title {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .extra-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+        .total-box {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .total-box h2 {
+            color: #0d47a1;
+            margin: 0;
+        }
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+        .alert-error { background-color: #ffebee; color: #c62828; display: block; }
+        .alert-success { background-color: #e8f5e9; color: #2e7d32; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loginScreen" class="login-screen active">
+        <h1>🔐 Acceso Privado</h1>
+        <div class="form-group">
+            <label for="passwordField">Contraseña del Sistema:</label>
+            <input type="password" id="passwordField" placeholder="Introduce tu clave móvil">
+        </div>
+        <button onclick="login()">Ingresar</button>
+        <div id="loginError" class="alert alert-error" style="display:none; margin-top:10px;">Clave Incorrecta</div>
+    </div>
+
+    <div id="appScreen" class="app-screen">
+        <div class="config-section">
+            <div class="config-header" onclick="toggleConfig()">
+                <span>⚙️ Configuración del Motor</span>
+                <span id="configArrow">▶</span>
+            </div>
+            <div id="configBody" class="config-body">
+                <div class="form-group">
+                    <label for="porcentajeInput">Porcentaje de Ganancia (%):</label>
+                    <input type="number" id="porcentajeInput" value="7.0" step="0.1" min="0">
+                </div>
+            </div>
+        </div>
+
+        <h1>📊 Control de Comisiones</h1>
+
+        <div class="form-group">
+            <label>📂 1. Archivo Excel Ventas:</label>
+            <input type="file" id="fileVentas" accept=".xlsx, .xls">
+        </div>
+        <div class="form-group">
+            <label>📂 2. Archivo Excel Productos:</label>
+            <input type="file" id="fileProductos" accept=".xlsx, .xls">
+        </div>
+
+        <button class="btn-success" onclick="procesarArchivos()">🚀 PROCESAR MES</button>
+        <div id="statusAlert" class="alert" style="margin-top:15px;"></div>
+
+        <div id="resultadosSection" style="display: none; margin-top: 20px;">
+            <h2>Resultados del Periodo</h2>
+            
+            <div class="metric-card">
+                <div class="metric-title">Venta Neta Total</div>
+                <div id="valVentaNeta" class="metric-value">$0.00</div>
+            </div>
+            <div class="metric-card" style="border-left-color: #4CAF50;">
+                <div class="metric-title">Comisión Base</div>
+                <div id="valComisionBase" class="metric-value">$0.00</div>
+            </div>
+
+            <h3 style="margin-top:20px; text-align:left;">Gastos y Ajustes (Extras)</h3>
+            <div class="form-group" style="display:flex; gap:10px;">
+                <input type="text" id="extraDesc" placeholder="Ej: Petróleo, Almuerzo" style="flex:2;">
+                <input type="number" id="extraMonto" placeholder="Monto" style="flex:1;">
+            </div>
+            <button onclick="agregarExtra()">Añadir Ítem</button>
+
+            <div id="listaExtrasContainer" style="margin-top:15px;"></div>
+
+            <div class="total-box">
+                <p style="font-size:12px; text-transform:uppercase; color:#555;">Total Neto a Recibir</p>
+                <h2 id="valTotalFinal">$0.00</h2>
+            </div>
+
+            <div style="margin-top:20px;">
+                <h3 style="text-align:left;">Respaldo en la Nube</h3>
+                <div class="form-group">
+                    <label for="scriptUrlInput">URL de la Web App de Google (Puente):</label>
+                    <input type="text" id="scriptUrlInput" placeholder="Pega aquí la URL generada en Google Drive">
+                </div>
+                <button class="btn-success" onclick="guardarEnDrive()">💾 Guardar Registro en Drive</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Variables de sesión en memoria
+    let datosVentasRaw = null;
+    let datosProductosRaw = null;
+    let comisionBaseCalculada = 0;
+    let ventaNetaCalculada = 0;
+    let listaAjustesExtras = [];
+
+    // Función de validación de contraseña
+    function login() {
+        const pass = document.getElementById("passwordField").value;
+        if (pass === "antonio2026") {
+            document.getElementById("loginScreen").classList.remove("active");
+            document.getElementById("appScreen").classList.add("active");
+        } else {
+            const err = document.getElementById("loginError");
+            err.style.display = "block";
+            setTimeout(() => { err.style.display = "none"; }, 3000);
+        }
+    }
+
+    // Contraer/Expandir menú de configuración
+    function toggleConfig() {
+        const body = document.getElementById("configBody");
+        const arrow = document.getElementById("configArrow");
+        if (body.style.display === "block") {
+            body.style.display = "none";
+            arrow.innerText = "▶";
+        } else {
+            body.style.display = "block";
+            arrow.innerText = "▼";
+        }
+    }
+
+    // Listeners automáticos para procesar los binarios binarios de los archivos subidos
+    document.getElementById('fileVentas').addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let sheetName = workbook.SheetNames[0];
+            datosVentasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    document.getElementById('fileProductos').addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let sheetName = workbook.SheetNames[0];
+            datosProductosRaw = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    // MOTOR PRINCIPAL DE CRUCE DE DATOS Y OPERACIONES MATEMÁTICAS
+    function procesarArchivos() {
+        const alertBox = document.getElementById("statusAlert");
+        alertBox.className = "alert";
+        alertBox.style.display = "none";
+
+        if (!datosVentasRaw || !datosProductosRaw) {
+            alertBox.innerText = "Por favor, cargue ambos archivos Excel antes de procesar.";
+            alertBox.classList.add("alert-error");
+            return;
+        }
+
+        try {
+            let pct = parseFloat(document.getElementById("porcentajeInput").value) / 100;
+            if (isNaN(pct)) pct = 0.07;
+
+            ventaNetaCalculada = 0;
+            comisionBaseCalculada = 0;
+
+            // Índices basados en letras de columnas (0 para A, 15 para P, etc.)
+            // Ventas: P (15)=Cod, T (19)=Cant, X (23)=Monto, AO (40)=Vendedor
+            const idxCodV = 15;
+            const idxCantV = 19;
+            const idxMontoV = 23;
+            const idxVendV = 40;
+
+            // Productos: A (0)=Cod, E (4)=PrecioCompraNeto
+            const idxCodP = 0;
+            const idxPrecioP = 4;
+
+            // Mapear el catálogo de productos a un diccionario indexado para búsquedas instantáneas
+            let catalogoProductos = {};
+            for (let i = 1; i < datosProductosRaw.length; i++) {
+                let fila = datosProductosRaw[i];
+                if (fila && fila[idxCodP] !== undefined) {
+                    let codigo = String(fila[idxCodP]).trim().toLowerCase();
+                    let precioCompra = parseFloat(fila[idxPrecioP]) || 0;
+                    catalogoProductos[codigo] = precioCompra;
+                }
+            }
+
+            let registrosEncontrados = 0;
+
+            // Recorrer filas de Ventas (saltando la cabecera i=0)
+            for (let i = 1; i < datosVentasRaw.length; i++) {
+                let fila = datosVentasRaw[i];
+                if (!fila || fila[idxVendV] === undefined) continue;
+
+                let vendedor = String(fila[idxVendV]).trim().toLowerCase();
+                
+                // Filtro por tu nombre exacto
+                if (vendedor.includes("antonio enrique mart")) {
+                    registrosEncontrados++;
+                    
+                    let codigoProd = String(fila[idxCodV]).trim().toLowerCase();
+                    let cantidad = parseFloat(fila[idxCantV]) || 0;
+                    let montoItem = parseFloat(fila[idxMontoV]) || 0;
+
+                    // Sumatoria de Venta Neta Total
+                    ventaNetaCalculada += montoItem;
+
+                    // Cruce de datos con la base de productos
+                    if (catalogoProductos[codigoProd] !== undefined) {
+                        let precioCompraNetoUnidad = catalogoProductos[codigoProd];
+                        let costoTotalItem = precioCompraNetoUnidad * cantidad;
+                        let gananciaRealItem = montoItem - costoTotalItem;
+
+                        // Aplicar porcentaje configurable a la ganancia
+                        let comisionItem = gananciaRealItem * pct;
+                        comisionBaseCalculada += comisionItem;
+                    }
+                }
+            }
+
+            if (registrosEncontrados === 0) {
+                alertBox.innerText = "No se encontraron registros vinculados a Antonio Enrique Martínez Toledo.";
+                alertBox.classList.add("alert-error");
+                return;
+            }
+
+            // Renderizar datos calculados en pantalla
+            document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
+            document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
+            
+            actualizarCuadroTotalFinal();
+            
+            document.getElementById("resultadosSection").style.display = "block";
+            alertBox.innerText = "¡Procesamiento mensual completado de forma exitosa!";
+            alertBox.classList.add("alert-success");
+
+        } catch (err) {
+            alertBox.innerText = "Error crítico durante el análisis: " + err.message;
+            alertBox.classList.add("alert-error");
+        }
+    }
+
+    // Agregar montos adicionales de forma manual
+    function agregarExtra() {
+        const descInput = document.getElementById("extraDesc");
+        const montoInput = document.getElementById("extraMonto");
+        
+        const desc = descInput.value.trim();
+        const monto = parseFloat(montoInput.value);
+
+        if (desc === "" || isNaN(monto) || monto === 0) {
+            alert("Introduce un concepto y un valor numérico válido.");
+            return;
+        }
+
+        listaAjustesExtras.push({ descripcion: desc, valor: monto });
+        
+        // Limpiar campos del formulario
+        descInput.value = "";
+        montoInput.value = "";
+
+        dibujarListaExtras();
+        actualizarCuadroTotalFinal();
+    }
+
+    function dibujarListaExtras() {
+        const container = document.getElementById("listaExtrasContainer");
+        container.innerHTML = "";
+        
+        listaAjustesExtras.forEach((item, index) => {
+            const div = document.createElement("div");
+            div.className = "extra-item";
+            
+            const signo = item.valor > 0 ? "+" : "";
+            const color = item.valor > 0 ? "green" : "red";
+            
+            div.innerHTML = `
+                <span>• <b>${item.descripcion}</b></span>
+                <span style="color: ${color}; font-weight: bold;">
+                    ${signo}${formatearMoneda(item.valor)}
+                    <span onclick="eliminarExtra(${index})" style="color:grey; cursor:pointer; margin-left:10px;">❌</span>
+                </span>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function eliminarExtra(index) {
+        listaAjustesExtras.splice(index, 1);
+        dibujarListaExtras();
+        actualizarCuadroTotalFinal();
+    }
+
+    function obtenerTotalExtras() {
+        return listaAjustesExtras.reduce((suma, item) => suma + item.valor, 0);
+    }
+
+    function actualizarCuadroTotalFinal() {
+        const final = comisionBaseCalculada + obtenerTotalExtras();
+        document.getElementById("valTotalFinal").innerText = formatearMoneda(final);
+    }
+
+    function formatearMoneda(valor) {
+        return "$" + valor.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ENVÍO DE DATOS ASÍNCRONO A LA HOJA DE DRIVE VIA GOOGLE APPS SCRIPT
+    function guardarEnDrive() {
+        const urlScript = document.getElementById("scriptUrlInput").value.trim();
+        if (urlScript === "") {
+            alert("Por favor, introduce primero la URL de tu Web App de Google.");
+            return;
+        }
+
+        const totalExtras = obtenerTotalExtras();
+        const totalFinal = comisionBaseCalculada + totalExtras;
+
+        // Crear payload JSON con los datos clave del mes
+        const datosAEnviar = {
+            venta_neta_total: ventaNetaCalculada,
+            comision_base: comisionBaseCalculada,
+            total_ajustes: totalExtras,
+            total_final: totalFinal
+        };
+
+        // Realizar la petición usando el protocolo CORS modificado por el script de Google
+        fetch(urlScript, {
+            method: "POST",
+            mode: "no-cors", 
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datosAEnviar)
+        })
+        .then(() => {
+            alert("✅ Solicitud enviada. Verifique su archivo de Google Drive en unos segundos para confirmar el registro imborrable.");
+        })
+        .catch(err => {
+            alert("Ocurrió un error en la conexión de red: " + err.message);
+        });
+    }
+</script>
+
+</body>
+</html>
+
