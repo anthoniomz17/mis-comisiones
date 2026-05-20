@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Comisiones de Antonio</title>
+    <title>Control de Comisiones Avanzado - Antonio</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -28,6 +28,7 @@
         h1, h2, h3 {
             text-align: center;
             margin-bottom: 15px;
+            color: #1F4E78;
         }
         .login-screen, .app-screen {
             display: none;
@@ -43,6 +44,7 @@
             margin-bottom: 5px;
             font-weight: 600;
             font-size: 14px;
+            color: #444;
         }
         input[type="text"], input[type="password"], input[type="number"], input[type="file"] {
             width: 100%;
@@ -50,6 +52,7 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 16px;
+            background-color: #fafafa;
         }
         button {
             width: 100%;
@@ -61,7 +64,7 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 5px;
             transition: background 0.3s;
         }
         button:hover {
@@ -73,12 +76,26 @@
         .btn-success:hover {
             background-color: #45a049;
         }
-        .config-section {
+        .btn-secondary {
+            background-color: #78909C;
+        }
+        .btn-secondary:hover {
+            background-color: #607D8B;
+        }
+        .section-block {
             background: #fdfdfd;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #8EA9DB;
+        }
+        .config-section {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
             padding: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .config-header {
             display: flex;
@@ -87,7 +104,7 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 14px;
-            color: #666;
+            color: #475569;
         }
         .config-body {
             display: none;
@@ -117,16 +134,17 @@
             font-size: 15px;
         }
         .total-box {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
+            background: #D9E1F2;
+            border: 2px solid #8EA9DB;
             padding: 15px;
             border-radius: 8px;
             text-align: center;
             margin-top: 20px;
         }
         .total-box h2 {
-            color: #0d47a1;
+            color: #1F4E78;
             margin: 0;
+            font-size: 24px;
         }
         .alert {
             padding: 10px;
@@ -138,6 +156,34 @@
         }
         .alert-error { background-color: #ffebee; color: #c62828; display: block; }
         .alert-success { background-color: #e8f5e9; color: #2e7d32; display: block; }
+        
+        /* Tabla Responsiva Historial */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        th {
+            background-color: #D9E1F2;
+            color: #1F4E78;
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #8EA9DB;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #8EA9DB;
+            background-color: #ffffff;
+        }
+        tr:nth-child(even) td {
+            background-color: #F2F5F9;
+        }
     </style>
 </head>
 <body>
@@ -154,9 +200,10 @@
     </div>
 
     <div id="appScreen" class="app-screen">
+        
         <div class="config-section">
             <div class="config-header" onclick="toggleConfig()">
-                <span>⚙️ Configuración del Motor</span>
+                <span>⚙️ Configuración Oculta del Motor</span>
                 <span id="configArrow">▶</span>
             </div>
             <div id="configBody" class="config-body">
@@ -164,25 +211,45 @@
                     <label for="porcentajeInput">Porcentaje de Ganancia (%):</label>
                     <input type="number" id="porcentajeInput" value="7.0" step="0.1" min="0">
                 </div>
+                <div class="form-group">
+                    <label for="scriptUrlInput">URL de la Web App de Google (Puente):</label>
+                    <input type="text" id="scriptUrlInput" placeholder="Pega la URL de Apps Script aquí">
+                </div>
             </div>
         </div>
 
-        <h1>📊 Control de Comisiones</h1>
+        <h1>📊 Sistema de Comisiones</h1>
 
-        <div class="form-group">
-            <label>📂 1. Archivo Excel Ventas:</label>
-            <input type="file" id="fileVentas" accept=".xlsx, .xls">
+        <div class="section-block">
+            <h2>💸 Registro de Gastos Diarios</h2>
+            <p style="font-size:12px; color:#555; margin-bottom:10px; text-align:center;">Usa esto durante el mes para registrar compras de inmediato en la nube sin subir planillas Excel.</p>
+            <div class="form-group">
+                <label>Concepto del Gasto:</label>
+                <input type="text" id="gastoTemporalDesc" placeholder="Ej: Petróleo Camión, Repuesto, Almuerzo">
+            </div>
+            <div class="form-group">
+                <label>Monto ($):</label>
+                <input type="number" id="gastoTemporalMonto" placeholder="Ej: 25000 o -25000">
+            </div>
+            <button class="btn-secondary" onclick="guardarGastoDiario()">Enviar Gasto a Lista de Espera</button>
         </div>
-        <div class="form-group">
-            <label>📂 2. Archivo Excel Productos:</label>
-            <input type="file" id="fileProductos" accept=".xlsx, .xls">
+
+        <div class="section-block">
+            <h2>📅 Procesamiento Cierre de Mes</h2>
+            <div class="form-group">
+                <label>📂 1. Cargar Archivo Ventas (P, T, X, AO):</label>
+                <input type="file" id="fileVentas" accept=".xlsx, .xls">
+            </div>
+            <div class="form-group">
+                <label>📂 2. Cargar Archivo Productos (A, E):</label>
+                <input type="file" id="fileProductos" accept=".xlsx, .xls">
+            </div>
+            <button class="btn-success" onclick="procesarArchivosMensuales()">🚀 PROCESAR MES</button>
+            <div id="statusAlert" class="alert" style="margin-top:15px;"></div>
         </div>
 
-        <button class="btn-success" onclick="procesarArchivos()">🚀 PROCESAR MES</button>
-        <div id="statusAlert" class="alert" style="margin-top:15px;"></div>
-
-        <div id="resultadosSection" style="display: none; margin-top: 20px;">
-            <h2>Resultados del Periodo</h2>
+        <div id="resultadosSection" style="display: none; margin-top: 20px;" class="section-block">
+            <h2>Resumen Calculado del Periodo</h2>
             
             <div class="metric-card">
                 <div class="metric-title">Venta Neta Total</div>
@@ -193,41 +260,55 @@
                 <div id="valComisionBase" class="metric-value">$0.00</div>
             </div>
 
-            <h3 style="margin-top:20px; text-align:left;">Gastos y Ajustes (Extras)</h3>
-            <div class="form-group" style="display:flex; gap:10px;">
-                <input type="text" id="extraDesc" placeholder="Ej: Petróleo, Almuerzo" style="flex:2;">
-                <input type="number" id="extraMonto" placeholder="Monto" style="flex:1;">
-            </div>
-            <button onclick="agregarExtra()">Añadir Ítem</button>
-
-            <div id="listaExtrasContainer" style="margin-top:15px;"></div>
+            <h3 style="margin-top:20px; text-align:left;">Gastos Consolidados de este Mes</h3>
+            <button class="btn-secondary" style="font-size:12px; padding:6px;" onclick="importarGastosTemporalesDesdeDrive()">🔄 Descargar Gastos del Mes desde Drive</button>
+            
+            <div id="listaExtrasContainer" style="margin-top:15px; background:#fff; padding:10px; border-radius:6px;"></div>
 
             <div class="total-box">
-                <p style="font-size:12px; text-transform:uppercase; color:#555;">Total Neto a Recibir</p>
+                <p style="font-size:12px; text-transform:uppercase; color:#1F4E78; font-weight:bold;">Total Neto a Recibir</p>
                 <h2 id="valTotalFinal">$0.00</h2>
             </div>
 
-            <div style="margin-top:20px;">
-                <h3 style="text-align:left;">Respaldo en la Nube</h3>
-                <div class="form-group">
-                    <label for="scriptUrlInput">URL de la Web App de Google (Puente):</label>
-                    <input type="text" id="scriptUrlInput" placeholder="Pega aquí la URL generada en Google Drive">
-                </div>
-                <button class="btn-success" onclick="guardarEnDrive()">💾 Guardar Registro en Drive</button>
+            <button class="btn-success" style="margin-top:20px; font-size:18px;" onclick="guardarCierreDefinitivoEnDrive()">💾 Respaldar este Mes Permanentemente</button>
+        </div>
+
+        <div class="section-block">
+            <h2>📜 Historial de Cierres Pasados</h2>
+            <button onclick="llamarHistorialAntiguo()">Traer Registros Guardados en Drive</button>
+            <div class="table-container">
+                <table id="tablaHistorial">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Venta Neto</th>
+                            <th>Comisión</th>
+                            <th>Ajustes</th>
+                            <th>Total Final</th>
+                            <th>Detalle Gastos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" style="text-align:center; color:gray;">Presiona el botón para cargar el pasado...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    // Variables de sesión en memoria
+    // Memoria volátil de la aplicación
     let datosVentasRaw = null;
     let datosProductosRaw = null;
     let comisionBaseCalculada = 0;
     let ventaNetaCalculada = 0;
     let listaAjustesExtras = [];
 
-    // Función de validación de contraseña
+    // Verificación de acceso seguro
     function login() {
         const pass = document.getElementById("passwordField").value;
         if (pass === "antonio2026") {
@@ -240,7 +321,7 @@
         }
     }
 
-    // Contraer/Expandir menú de configuración
+    // Contraer y desplegar la configuración
     function toggleConfig() {
         const body = document.getElementById("configBody");
         const arrow = document.getElementById("configArrow");
@@ -253,14 +334,13 @@
         }
     }
 
-    // Listeners automáticos para procesar los binarios binarios de los archivos subidos
+    // Escuchadores binarios de carga de planillas
     document.getElementById('fileVentas').addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
             let data = new Uint8Array(e.target.result);
             let workbook = XLSX.read(data, {type: 'array'});
-            let sheetName = workbook.SheetNames[0];
-            datosVentasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+            datosVentasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     });
@@ -270,20 +350,48 @@
         reader.onload = function(e) {
             let data = new Uint8Array(e.target.result);
             let workbook = XLSX.read(data, {type: 'array'});
-            let sheetName = workbook.SheetNames[0];
-            datosProductosRaw = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+            datosProductosRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     });
 
-    // MOTOR PRINCIPAL DE CRUCE DE DATOS Y OPERACIONES MATEMÁTICAS
-    function procesarArchivos() {
+    // MÓDULO 1: ENVIAR GASTO INDEPENDIENTE A LA NUBE
+    function guardarGastoDiario() {
+        const urlScript = document.getElementById("scriptUrlInput").value.trim();
+        const desc = document.getElementById("gastoTemporalDesc").value.trim();
+        const monto = parseFloat(document.getElementById("gastoTemporalMonto").value);
+
+        if (urlScript === "") { return alert("Por favor, abre el menú de engrane e introduce la URL de tu Web App de Google."); }
+        if (desc === "" || isNaN(monto) || monto === 0) { return alert("Ingresa una descripción y un monto válido."); }
+
+        const payload = {
+            action: "guardar_gasto_temporal",
+            descripcion: desc,
+            monto: monto
+        };
+
+        fetch(urlScript, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert("✅ Gasto diario registrado con éxito en la lista de espera de Drive.");
+            document.getElementById("gastoTemporalDesc").value = "";
+            document.getElementById("gastoTemporalMonto").value = "";
+        })
+        .catch(err => alert("Error de red: " + err.message));
+    }
+
+    // MÓDULO 2: PROCESAR EXCEL Y MATEMÁTICA DE COMISIONES
+    function procesarArchivosMensuales() {
         const alertBox = document.getElementById("statusAlert");
         alertBox.className = "alert";
         alertBox.style.display = "none";
 
         if (!datosVentasRaw || !datosProductosRaw) {
-            alertBox.innerText = "Por favor, cargue ambos archivos Excel antes de procesar.";
+            alertBox.innerText = "Por favor, carga ambas planillas Excel antes de procesar.";
             alertBox.classList.add("alert-error");
             return;
         }
@@ -295,182 +403,200 @@
             ventaNetaCalculada = 0;
             comisionBaseCalculada = 0;
 
-            // Índices basados en letras de columnas (0 para A, 15 para P, etc.)
-            // Ventas: P (15)=Cod, T (19)=Cant, X (23)=Monto, AO (40)=Vendedor
-            const idxCodV = 15;
-            const idxCantV = 19;
-            const idxMontoV = 23;
-            const idxVendV = 40;
+            // Índices estructurales físicos
+            const idxCodV = 15;   // P
+            const idxCantV = 19;  // T
+            const idxMontoV = 23; // X
+            const idxVendV = 40;  // AO
 
-            // Productos: A (0)=Cod, E (4)=PrecioCompraNeto
-            const idxCodP = 0;
-            const idxPrecioP = 4;
+            const idxCodP = 0;    // A
+            const idxPrecioP = 4; // E
 
-            // Mapear el catálogo de productos a un diccionario indexado para búsquedas instantáneas
+            // Indexar catálogo de precios de coste
             let catalogoProductos = {};
             for (let i = 1; i < datosProductosRaw.length; i++) {
                 let fila = datosProductosRaw[i];
                 if (fila && fila[idxCodP] !== undefined) {
                     let codigo = String(fila[idxCodP]).trim().toLowerCase();
-                    let precioCompra = parseFloat(fila[idxPrecioP]) || 0;
-                    catalogoProductos[codigo] = precioCompra;
+                    catalogoProductos[codigo] = parseFloat(fila[idxPrecioP]) || 0;
                 }
             }
 
-            let registrosEncontrados = 0;
-
-            // Recorrer filas de Ventas (saltando la cabecera i=0)
+            let encontrados = 0;
             for (let i = 1; i < datosVentasRaw.length; i++) {
                 let fila = datosVentasRaw[i];
                 if (!fila || fila[idxVendV] === undefined) continue;
 
-                let vendedor = String(fila[idxVendV]).trim().toLowerCase();
-                
-                // Filtro por tu nombre exacto
-                if (vendedor.includes("antonio enrique mart")) {
-                    registrosEncontrados++;
-                    
+                let vdo = String(fila[idxVendV]).trim().toLowerCase();
+                // Búsqueda inteligente por tu coincidencia de nombre
+                if (vdo.includes("antonio enrique mart")) {
+                    encontrados++;
                     let codigoProd = String(fila[idxCodV]).trim().toLowerCase();
                     let cantidad = parseFloat(fila[idxCantV]) || 0;
                     let montoItem = parseFloat(fila[idxMontoV]) || 0;
 
-                    // Sumatoria de Venta Neta Total
                     ventaNetaCalculada += montoItem;
 
-                    // Cruce de datos con la base de productos
                     if (catalogoProductos[codigoProd] !== undefined) {
-                        let precioCompraNetoUnidad = catalogoProductos[codigoProd];
-                        let costoTotalItem = precioCompraNetoUnidad * cantidad;
-                        let gananciaRealItem = montoItem - costoTotalItem;
-
-                        // Aplicar porcentaje configurable a la ganancia
-                        let comisionItem = gananciaRealItem * pct;
-                        comisionBaseCalculada += comisionItem;
+                        let costoUnitario = catalogoProductos[codigoProd];
+                        let gananciaFila = montoItem - (costoUnitario * cantidad);
+                        comisionBaseCalculada += (gananciaFila * pct);
                     }
                 }
             }
 
-            if (registrosEncontrados === 0) {
-                alertBox.innerText = "No se encontraron registros vinculados a Antonio Enrique Martínez Toledo.";
+            if (encontrados === 0) {
+                alertBox.innerText = "No se encontraron ventas para Antonio Enrique Martínez Toledo.";
                 alertBox.classList.add("alert-error");
                 return;
             }
 
-            // Renderizar datos calculados en pantalla
             document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
             document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
             
             actualizarCuadroTotalFinal();
-            
             document.getElementById("resultadosSection").style.display = "block";
-            alertBox.innerText = "¡Procesamiento mensual completado de forma exitosa!";
+            
+            alertBox.innerText = "¡Cruce de planillas finalizado! Ahora puedes importar tus gastos temporales.";
             alertBox.classList.add("alert-success");
 
+            // Intentar jalar automáticamente los gastos almacenados durante el mes
+            importarGastosTemporalesDesdeDrive();
+
         } catch (err) {
-            alertBox.innerText = "Error crítico durante el análisis: " + err.message;
+            alertBox.innerText = "Fallo técnico en procesamiento: " + err.message;
             alertBox.classList.add("alert-error");
         }
     }
 
-    // Agregar montos adicionales de forma manual
-    function agregarExtra() {
-        const descInput = document.getElementById("extraDesc");
-        const montoInput = document.getElementById("extraMonto");
-        
-        const desc = descInput.value.trim();
-        const monto = parseFloat(montoInput.value);
+    // TRAER GASTOS TEMPORALES DESDE DRIVE AL PANEL DE CIERRE
+    function importarGastosTemporalesDesdeDrive() {
+        const urlScript = document.getElementById("scriptUrlInput").value.trim();
+        if (urlScript === "") return;
 
-        if (desc === "" || isNaN(monto) || monto === 0) {
-            alert("Introduce un concepto y un valor numérico válido.");
+        fetch(urlScript + "?action=obtener_gastos_temporales")
+        .then(res => res.json())
+        .then(respuesta => {
+            if (respuesta.status === "success") {
+                listaAjustesExtras = respuesta.data;
+                dibujarListaExtrasEnPantalla();
+                actualizarCuadroTotalFinal();
+            }
+        })
+        .catch(err => console.log("Aviso: No se pudo conectar de forma directa para importar gastos: " + err.message));
+    }
+
+    function dibujarListaExtrasEnPantalla() {
+        const container = document.getElementById("listaExtrasContainer");
+        container.innerHTML = "";
+
+        if (listaAjustesExtras.length === 0) {
+            container.innerHTML = "<p style='color:gray; font-size:13px; text-align:center;'>No hay gastos temporales registrados en este mes.</p>";
             return;
         }
 
-        listaAjustesExtras.push({ descripcion: desc, valor: monto });
-        
-        // Limpiar campos del formulario
-        descInput.value = "";
-        montoInput.value = "";
-
-        dibujarListaExtras();
-        actualizarCuadroTotalFinal();
-    }
-
-    function dibujarListaExtras() {
-        const container = document.getElementById("listaExtrasContainer");
-        container.innerHTML = "";
-        
-        listaAjustesExtras.forEach((item, index) => {
+        listaAjustesExtras.forEach((item) => {
             const div = document.createElement("div");
             div.className = "extra-item";
-            
-            const signo = item.valor > 0 ? "+" : "";
-            const color = item.valor > 0 ? "green" : "red";
-            
+            const color = item.monto > 0 ? "green" : "red";
+            const signo = item.monto > 0 ? "+" : "";
             div.innerHTML = `
                 <span>• <b>${item.descripcion}</b></span>
-                <span style="color: ${color}; font-weight: bold;">
-                    ${signo}${formatearMoneda(item.valor)}
-                    <span onclick="eliminarExtra(${index})" style="color:grey; cursor:pointer; margin-left:10px;">❌</span>
-                </span>
+                <span style="color:${color}; font-weight:bold;">${signo}${formatearMoneda(item.monto)}</span>
             `;
             container.appendChild(div);
         });
     }
 
-    function eliminarExtra(index) {
-        listaAjustesExtras.splice(index, 1);
-        dibujarListaExtras();
-        actualizarCuadroTotalFinal();
-    }
-
-    function obtenerTotalExtras() {
-        return listaAjustesExtras.reduce((suma, item) => suma + item.valor, 0);
+    function obtenerSumatoriaExtras() {
+        return listaAjustesExtras.reduce((acc, item) => acc + item.monto, 0);
     }
 
     function actualizarCuadroTotalFinal() {
-        const final = comisionBaseCalculada + obtenerTotalExtras();
-        document.getElementById("valTotalFinal").innerText = formatearMoneda(final);
+        const tot = comisionBaseCalculada + obtenerSumatoriaExtras();
+        document.getElementById("valTotalFinal").innerText = formatearMoneda(tot);
     }
 
-    function formatearMoneda(valor) {
-        return "$" + valor.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatearMoneda(val) {
+        return "$" + val.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // ENVÍO DE DATOS ASÍNCRONO A LA HOJA DE DRIVE VIA GOOGLE APPS SCRIPT
-    function guardarEnDrive() {
+    // CONSOLIDAR Y ENVIAR EL CIERRE COMPLETO AL HISTORIAL DEFINITIVO
+    function guardarCierreDefinitivoEnDrive() {
         const urlScript = document.getElementById("scriptUrlInput").value.trim();
-        if (urlScript === "") {
-            alert("Por favor, introduce primero la URL de tu Web App de Google.");
-            return;
-        }
+        if (urlScript === "") { return alert("Introduce la URL de tu Web App de Google."); }
 
-        const totalExtras = obtenerTotalExtras();
+        // Empaquetar el array de gastos en una sola celda estructurada de texto para no romper columnas
+        let detalleTextoCadena = listaAjustesExtras.map(x => `[${x.descripcion}: $${x.monto}]`).join(" ");
+        if (detalleTextoCadena === "") detalleTextoCadena = "[Sin gastos registrados]";
+
+        const totalExtras = obtenerSumatoriaExtras();
         const totalFinal = comisionBaseCalculada + totalExtras;
 
-        // Crear payload JSON con los datos clave del mes
-        const datosAEnviar = {
+        const payload = {
+            action: "guardar_cierre_mes",
             venta_neta_total: ventaNetaCalculada,
             comision_base: comisionBaseCalculada,
             total_ajustes: totalExtras,
-            total_final: totalFinal
+            total_final: totalFinal,
+            detalle_gastos: detalleTextoCadena
         };
 
-        // Realizar la petición usando el protocolo CORS modificado por el script de Google
         fetch(urlScript, {
             method: "POST",
-            mode: "no-cors", 
+            mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datosAEnviar)
+            body: JSON.stringify(payload)
         })
         .then(() => {
-            alert("✅ Solicitud enviada. Verifique su archivo de Google Drive en unos segundos para confirmar el registro imborrable.");
+            alert("✅ ¡Cierre mensual guardado permanentemente en el historial de Drive! La lista de espera temporal ha sido limpiada automáticamente.");
+            // Limpiar interfaz
+            document.getElementById("resultadosSection").style.display = "none";
+            datosVentasRaw = null;
+            datosProductosRaw = null;
+            listaAjustesExtras = [];
+            document.getElementById("fileVentas").value = "";
+            document.getElementById("fileProductos").value = "";
+        })
+        .catch(err => alert("Error de red: " + err.message));
+    }
+
+    // MÓDULO 3: LLAMAR COMISIONES ANTIGUAS DESDE EL EXCEL
+    function llamarHistorialAntiguo() {
+        const urlScript = document.getElementById("scriptUrlInput").value.trim();
+        if (urlScript === "") { return alert("Introduce la URL de tu Web App para poder leer el historial."); }
+
+        const tbody = document.querySelector("#tablaHistorial tbody");
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:blue;'>Buscando registros en Drive...</td></tr>";
+
+        fetch(urlScript + "?action=obtener_historial")
+        .then(res => res.json())
+        .then(respuesta => {
+            tbody.innerHTML = "";
+            if (respuesta.status === "success" && respuesta.data.length > 0) {
+                // Invertir el orden para mostrar el mes más reciente arriba del todo
+                respuesta.data.reverse().forEach(reg => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td style="white-space:nowrap;">${reg.fecha}</td>
+                        <td style="text-align:right; font-weight:bold;">${formatearMoneda(reg.venta_neta)}</td>
+                        <td style="text-align:right; color:green;">${formatearMoneda(reg.comision_base)}</td>
+                        <td style="text-align:right;">${formatearMoneda(reg.total_ajustes)}</td>
+                        <td style="text-align:right; color:blue; font-weight:bold;">${formatearMoneda(reg.total_final)}</td>
+                        <td style="font-size:11px; color:#555; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${reg.detalle}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:gray;'>No se encontraron cierres históricos guardados.</td></tr>";
+            }
         })
         .catch(err => {
-            alert("Ocurrió un error en la conexión de red: " + err.message);
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error al cargar el historial. Revisa los permisos de Apps Script.</td></tr>";
+            alert("Error de conexión: " + err.message);
         });
     }
 </script>
 
 </body>
 </html>
-
