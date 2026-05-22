@@ -211,10 +211,6 @@
                     <label for="porcentajeInput">Porcentaje de Ganancia (%):</label>
                     <input type="number" id="porcentajeInput" value="7.0" step="0.1" min="0">
                 </div>
-                <div class="form-group">
-                    <label for="scriptUrlInput">URL de la Web App de Google (Puente):</label>
-                    <input type="text" id="scriptUrlInput" placeholder="Pega la URL de Apps Script aquí">
-                </div>
             </div>
         </div>
 
@@ -301,6 +297,11 @@
 </div>
 
 <script>
+    // ====================================================================
+    // ⚠️ CONFIGURACIÓN CLAVE: PEGA TU URL DE GOOGLE APPS SCRIPT AQUÍ ABAJO
+    // ====================================================================
+    const URL_GOOGLE_SCRIPT = "AQUI_PEGA_TU_URL_DE_GOOGLE"; 
+    
     // Memoria volátil de la aplicación
     let datosVentasRaw = null;
     let datosProductosRaw = null;
@@ -355,13 +356,21 @@
         reader.readAsArrayBuffer(e.target.files[0]);
     });
 
+    function verificarURL() {
+        if (URL_GOOGLE_SCRIPT === "https://script.google.com/macros/s/AKfycbxi-Ka0zPwd5hWw5XbR-07yB4awlOxzr0rvQNnLG-vxTEBdw9p79jaUAC-5ilgml034/exec" || URL_GOOGLE_SCRIPT.trim() === "") {
+            alert("Error: No has configurado la URL de Google en el código de GitHub. Por favor, revisa el archivo index.html.");
+            return false;
+        }
+        return true;
+    }
+
     // MÓDULO 1: ENVIAR GASTO INDEPENDIENTE A LA NUBE
     function guardarGastoDiario() {
-        const urlScript = document.getElementById("scriptUrlInput").value.trim();
+        if (!verificarURL()) return;
+        
         const desc = document.getElementById("gastoTemporalDesc").value.trim();
         const monto = parseFloat(document.getElementById("gastoTemporalMonto").value);
 
-        if (urlScript === "") { return alert("Por favor, abre el menú de engrane e introduce la URL de tu Web App de Google."); }
         if (desc === "" || isNaN(monto) || monto === 0) { return alert("Ingresa una descripción y un monto válido."); }
 
         const payload = {
@@ -370,7 +379,7 @@
             monto: monto
         };
 
-        fetch(urlScript, {
+        fetch(URL_GOOGLE_SCRIPT, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
@@ -471,10 +480,9 @@
 
     // TRAER GASTOS TEMPORALES DESDE DRIVE AL PANEL DE CIERRE
     function importarGastosTemporalesDesdeDrive() {
-        const urlScript = document.getElementById("scriptUrlInput").value.trim();
-        if (urlScript === "") return;
+        if (!verificarURL()) return;
 
-        fetch(urlScript + "?action=obtener_gastos_temporales")
+        fetch(URL_GOOGLE_SCRIPT + "?action=obtener_gastos_temporales")
         .then(res => res.json())
         .then(respuesta => {
             if (respuesta.status === "success") {
@@ -523,8 +531,7 @@
 
     // CONSOLIDAR Y ENVIAR EL CIERRE COMPLETO AL HISTORIAL DEFINITIVO
     function guardarCierreDefinitivoEnDrive() {
-        const urlScript = document.getElementById("scriptUrlInput").value.trim();
-        if (urlScript === "") { return alert("Introduce la URL de tu Web App de Google."); }
+        if (!verificarURL()) return;
 
         // Empaquetar el array de gastos en una sola celda estructurada de texto para no romper columnas
         let detalleTextoCadena = listaAjustesExtras.map(x => `[${x.descripcion}: $${x.monto}]`).join(" ");
@@ -542,7 +549,7 @@
             detalle_gastos: detalleTextoCadena
         };
 
-        fetch(urlScript, {
+        fetch(URL_GOOGLE_SCRIPT, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
@@ -563,13 +570,12 @@
 
     // MÓDULO 3: LLAMAR COMISIONES ANTIGUAS DESDE EL EXCEL
     function llamarHistorialAntiguo() {
-        const urlScript = document.getElementById("scriptUrlInput").value.trim();
-        if (urlScript === "") { return alert("Introduce la URL de tu Web App para poder leer el historial."); }
+        if (!verificarURL()) return;
 
         const tbody = document.querySelector("#tablaHistorial tbody");
         tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:blue;'>Buscando registros en Drive...</td></tr>";
 
-        fetch(urlScript + "?action=obtener_historial")
+        fetch(URL_GOOGLE_SCRIPT + "?action=obtener_historial")
         .then(res => res.json())
         .then(respuesta => {
             tbody.innerHTML = "";
