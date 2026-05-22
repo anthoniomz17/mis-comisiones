@@ -93,3 +93,390 @@
         .config-section {
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            color: #475569;
+        }
+        .config-body {
+            display: none;
+            margin-top: 10px;
+        }
+        .metric-card {
+            background: #f8fafc;
+            border-left: 5px solid #2196F3;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .metric-title {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .extra-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+        .total-box {
+            background: #D9E1F2;
+            border: 2px solid #8EA9DB;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .total-box h2 {
+            color: #1F4E78;
+            margin: 0;
+            font-size: 24px;
+        }
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+        .alert-error { background-color: #ffebee; color: #c62828; display: block; }
+        .alert-success { background-color: #e8f5e9; color: #2e7d32; display: block; }
+        
+        /* Tabla Responsiva Historial */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        th {
+            background-color: #D9E1F2;
+            color: #1F4E78;
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #8EA9DB;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #8EA9DB;
+            background-color: #ffffff;
+        }
+        tr:nth-child(even) td {
+            background-color: #F2F5F9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loginScreen" class="login-screen active">
+        <h1>🔐 Acceso Privado</h1>
+        <div class="form-group">
+            <label for="passwordField">Contraseña del Sistema:</label>
+            <input type="password" id="passwordField" placeholder="Introduce tu clave móvil">
+        </div>
+        <button onclick="login()">Ingresar</button>
+        <div id="loginError" class="alert alert-error" style="display:none; margin-top:10px;">Clave Incorrecta</div>
+    </div>
+
+    <div id="appScreen" class="app-screen">
+        
+        <div class="config-section">
+            <div class="config-header" onclick="toggleConfig()">
+                <span>⚙️ Configuración Oculta del Motor</span>
+                <span id="configArrow">▶</span>
+            </div>
+            <div id="configBody" class="config-body">
+                <div class="form-group">
+                    <label for="porcentajeInput">Porcentaje de Ganancia (%):</label>
+                    <input type="number" id="porcentajeInput" value="7.0" step="0.1" min="0">
+                </div>
+            </div>
+        </div>
+
+        <h1>📊 Sistema de Comisiones</h1>
+
+        <div class="section-block">
+            <h2>💸 Registro de Gastos Diarios</h2>
+            <p style="font-size:12px; color:#555; margin-bottom:10px; text-align:center;">Usa esto durante el mes para registrar compras de inmediato en la nube sin subir planillas Excel.</p>
+            <div class="form-group">
+                <label>Concepto del Gasto:</label>
+                <input type="text" id="gastoTemporalDesc" placeholder="Ej: Petróleo Camión, Repuesto, Almuerzo">
+            </div>
+            <div class="form-group">
+                <label>Monto ($):</label>
+                <input type="number" id="gastoTemporalMonto" placeholder="Ej: 25000 o -25000">
+            </div>
+            <button class="btn-secondary" onclick="guardarGastoDiario()">Enviar Gasto a Lista de Espera</button>
+        </div>
+
+        <div class="section-block">
+            <h2>📅 Procesamiento Cierre de Mes</h2>
+            <div class="form-group">
+                <label>📂 1. Cargar Archivo Ventas (P, T, X, AO):</label>
+                <input type="file" id="fileVentas" accept=".xlsx, .xls">
+            </div>
+            <div class="form-group">
+                <label>📂 2. Cargar Archivo Productos (A, E):</label>
+                <input type="file" id="fileProductos" accept=".xlsx, .xls">
+            </div>
+            <button class="btn-success" onclick="procesarArchivosMensuales()">🚀 PROCESAR MES</button>
+            <div id="statusAlert" class="alert" style="margin-top:15px;"></div>
+        </div>
+
+        <div id="resultadosSection" style="display: none; margin-top: 20px;" class="section-block">
+            <h2>Resumen Calculado del Periodo</h2>
+            
+            <div class="metric-card">
+                <div class="metric-title">Venta Neta Total</div>
+                <div id="valVentaNeta" class="metric-value">$0.00</div>
+            </div>
+            <div class="metric-card" style="border-left-color: #4CAF50;">
+                <div class="metric-title">Comisión Base</div>
+                <div id="valComisionBase" class="metric-value">$0.00</div>
+            </div>
+
+            <h3 style="margin-top:20px; text-align:left;">Gastos Consolidados de este Mes</h3>
+            <button class="btn-secondary" style="font-size:12px; padding:6px;" onclick="importarGastosTemporalesDesdeDrive()">🔄 Descargar Gastos del Mes desde Drive</button>
+            
+            <div id="listaExtrasContainer" style="margin-top:15px; background:#fff; padding:10px; border-radius:6px;"></div>
+
+            <div class="total-box">
+                <p style="font-size:12px; text-transform:uppercase; color:#1F4E78; font-weight:bold;">Total Neto a Recibir</p>
+                <h2 id="valTotalFinal">$0.00</h2>
+            </div>
+
+            <button class="btn-success" style="margin-top:20px; font-size:18px;" onclick="guardarCierreDefinitivoEnDrive()">💾 Respaldar este Mes Permanentemente</button>
+        </div>
+
+        <div class="section-block">
+            <h2>📜 Historial de Cierres Pasados</h2>
+            <button onclick="llamarHistorialAntiguo()">Traer Registros Guardados en Drive</button>
+            <div class="table-container">
+                <table id="tablaHistorial">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Venta Neto</th>
+                            <th>Comisión</th>
+                            <th>Ajustes</th>
+                            <th>Total Final</th>
+                            <th>Detalle Gastos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" style="text-align:center; color:gray;">Presiona el botón para cargar el pasado...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ====================================================================
+    // ENLACE DE GOOGLE CONFIGURADO
+    // ====================================================================
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycby49hKtUT-JbSojGpXvpxDMq_K522OyQqVqLLazpaZEtXQnXUXvvUzUmaUtJm06x2e3/exec"; 
+    
+    // Memoria volátil de la aplicación
+    let datosVentasRaw = null;
+    let datosProductosRaw = null;
+    let comisionBaseCalculada = 0;
+    let ventaNetaCalculada = 0;
+    let listaAjustesExtras = [];
+
+    // Verificación de acceso seguro
+    function login() {
+        const pass = document.getElementById("passwordField").value;
+        if (pass === "antonio2026") {
+            document.getElementById("loginScreen").classList.remove("active");
+            document.getElementById("appScreen").classList.add("active");
+        } else {
+            const err = document.getElementById("loginError");
+            err.style.display = "block";
+            setTimeout(() => { err.style.display = "none"; }, 3000);
+        }
+    }
+
+    // Contraer y desplegar la configuración
+    function toggleConfig() {
+        const body = document.getElementById("configBody");
+        const arrow = document.getElementById("configArrow");
+        if (body.style.display === "block") {
+            body.style.display = "none";
+            arrow.innerText = "▶";
+        } else {
+            body.style.display = "block";
+            arrow.innerText = "▼";
+        }
+    }
+
+    // Escuchadores binarios de carga de planillas
+    document.getElementById('fileVentas').addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            datosVentasRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    document.getElementById('fileProductos').addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            datosProductosRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    function verificarURL() {
+        if (URL_GOOGLE_SCRIPT.trim() === "") {
+            alert("Error de configuración con la URL de Google.");
+            return false;
+        }
+        return true;
+    }
+
+    // MÓDULO 1: ENVIAR GASTO INDEPENDIENTE A LA NUBE
+    function guardarGastoDiario() {
+        if (!verificarURL()) return;
+        
+        const desc = document.getElementById("gastoTemporalDesc").value.trim();
+        const monto = parseFloat(document.getElementById("gastoTemporalMonto").value);
+
+        if (desc === "" || isNaN(monto) || monto === 0) { return alert("Ingresa una descripción y un monto válido."); }
+
+        const payload = {
+            action: "guardar_gasto_temporal",
+            descripcion: desc,
+            monto: monto
+        };
+
+        fetch(URL_GOOGLE_SCRIPT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert("✅ Gasto diario registrado con éxito en la lista de espera de Drive.");
+            document.getElementById("gastoTemporalDesc").value = "";
+            document.getElementById("gastoTemporalMonto").value = "";
+        })
+        .catch(err => alert("Error de red: " + err.message));
+    }
+
+    // MÓDULO 2: PROCESAR EXCEL Y MATEMÁTICA DE COMISIONES
+    function procesarArchivosMensuales() {
+        const alertBox = document.getElementById("statusAlert");
+        alertBox.className = "alert";
+        alertBox.style.display = "none";
+
+        if (!datosVentasRaw || !datosProductosRaw) {
+            alertBox.innerText = "Por favor, carga ambas planillas Excel antes de procesar.";
+            alertBox.classList.add("alert-error");
+            return;
+        }
+
+        try {
+            let pct = parseFloat(document.getElementById("porcentajeInput").value) / 100;
+            if (isNaN(pct)) pct = 0.07;
+
+            ventaNetaCalculada = 0;
+            comisionBaseCalculada = 0;
+
+            // Índices estructurales físicos
+            const idxCodV = 15;   // P
+            const idxCantV = 19;  // T
+            const idxMontoV = 23; // X
+            const idxVendV = 40;  // AO
+
+            const idxCodP = 0;    // A
+            const idxPrecioP = 4; // E
+
+            // Indexar catálogo de precios de coste
+            let catalogoProductos = {};
+            for (let i = 1; i < datosProductosRaw.length; i++) {
+                let fila = datosProductosRaw[i];
+                if (fila && fila[idxCodP] !== undefined) {
+                    let codigo = String(fila[idxCodP]).trim().toLowerCase();
+                    catalogoProductos[codigo] = parseFloat(fila[idxPrecioP]) || 0;
+                }
+            }
+
+            let encontrados = 0;
+            for (let i = 1; i < datosVentasRaw.length; i++) {
+                let fila = datosVentasRaw[i];
+                if (!fila || fila[idxVendV] === undefined) continue;
+
+                let vdo = String(fila[idxVendV]).trim().toLowerCase();
+                // Búsqueda inteligente por tu coincidencia de nombre
+                if (vdo.includes("antonio enrique mart")) {
+                    encontrados++;
+                    let codigoProd = String(fila[idxCodV]).trim().toLowerCase();
+                    let cantidad = parseFloat(fila[idxCantV]) || 0;
+                    let montoItem = parseFloat(fila[idxMontoV]) || 0;
+
+                    ventaNetaCalculada += montoItem;
+
+                    if (catalogoProductos[codigoProd] !== undefined) {
+                        let costoUnitario = catalogoProductos[codigoProd];
+                        let gananciaFila = montoItem - (costoUnitario * cantidad);
+                        comisionBaseCalculada += (gananciaFila * pct);
+                    }
+                }
+            }
+
+            if (encontrados === 0) {
+                alertBox.innerText = "No se encontraron ventas para Antonio Enrique Martínez Toledo.";
+                alertBox.classList.add("alert-error");
+                return;
+            }
+
+            document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
+            document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
+            
+            actualizarCuadroTotalFinal();
+            document.getElementById("resultadosSection").style.display = "block";
+            
+            alertBox.innerText = "¡Cruce de planillas finalizado! Ahora puedes importar tus gastos temporales.";
+            alertBox.classList.add("alert-success");
+
+            // Intentar jalar automáticamente los gastos almacenados durante el mes
+            importarGastosTemporalesDesdeDrive();
+
+        } catch (err) {
+            alertBox.innerText = "Fallo técnico en procesamiento: " + err.message;
+            alertBox.classList.add("alert-error");
+        }
+    }
+
+    // TRAER GASTOS TEMPORALES DESDE DRIVE AL PANEL DE CIERRE
+    function importarGastos
