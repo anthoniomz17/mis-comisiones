@@ -191,13 +191,11 @@
 <div class="container">
     <div id="loginScreen" class="login-screen active">
         <h1>🔐 Acceso Privado</h1>
-        <form onsubmit="event.preventDefault(); login();">
-            <div class="form-group">
-                <label for="passwordField">Contraseña del Sistema:</label>
-                <input type="password" id="passwordField" placeholder="Introduce tu clave móvil">
-            </div>
-            <button type="submit">Ingresar</button>
-        </form>
+        <div class="form-group">
+            <label for="passwordField">Contraseña del Sistema:</label>
+            <input type="password" id="passwordField" placeholder="Introduce tu clave móvil" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); login(); }">
+        </div>
+        <button onclick="login()">Ingresar</button>
         <div id="loginError" class="alert alert-error" style="display:none; margin-top:10px;">Clave Incorrecta</div>
     </div>
 
@@ -313,7 +311,6 @@
 
     // Verificación de acceso seguro
     function login() {
-        // El .trim() elimina automáticamente cualquier espacio invisible que ponga tu celular
         const pass = document.getElementById("passwordField").value.trim();
         
         if (pass === "antonio2026") {
