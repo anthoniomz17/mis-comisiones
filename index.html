@@ -255,6 +255,10 @@
                 <div class="metric-title">Comisión Base</div>
                 <div id="valComisionBase" class="metric-value">$0.00</div>
             </div>
+            <div class="metric-card" style="border-left-color: #FF9800; background-color: #FFF3E0;">
+                <div class="metric-title">Facturas Asociadas Procesadas</div>
+                <div id="valTotalFacturas" style="font-size: 14px; font-weight: bold; margin-top: 5px; color: #E65100;">0 facturas detectadas</div>
+            </div>
 
             <h3 style="margin-top:20px; text-align:left;">Gastos Consolidados de este Mes</h3>
             <button class="btn-secondary" style="font-size:12px; padding:6px;" onclick="importarGastosTemporalesDesdeDrive()">🔄 Descargar Gastos del Mes desde Drive</button>
@@ -282,11 +286,12 @@
                             <th>Ajustes</th>
                             <th>Total Final</th>
                             <th>Detalle Gastos</th>
+                            <th>Facturas Asociadas</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="6" style="text-align:center; color:gray;">Presiona el botón para cargar el pasado...</td>
+                            <td colspan="7" style="text-align:center; color:gray;">Presiona el botón para cargar el pasado...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -297,9 +302,6 @@
 </div>
 
 <script>
-    // ====================================================================
-    // ENLACE DE GOOGLE CONFIGURADO
-    // ====================================================================
     const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycby49hKtUT-JbSojGpXvpxDMq_K522OyQqVqLLazpaZEtXQnXUXvvUzUmaUtJm06x2e3/exec"; 
     
     // Memoria volátil de la aplicación
@@ -308,11 +310,10 @@
     let comisionBaseCalculada = 0;
     let ventaNetaCalculada = 0;
     let listaAjustesExtras = [];
+    let facturasAsociadasPeriodo = []; // Nueva lista de recolección de facturas
 
-    // Verificación de acceso seguro
     function login() {
         const pass = document.getElementById("passwordField").value.trim();
-        
         if (pass === "antonio2026") {
             document.getElementById("loginScreen").classList.remove("active");
             document.getElementById("appScreen").classList.add("active");
@@ -323,7 +324,6 @@
         }
     }
 
-    // Contraer y desplegar la configuración
     function toggleConfig() {
         const body = document.getElementById("configBody");
         const arrow = document.getElementById("configArrow");
@@ -336,7 +336,6 @@
         }
     }
 
-    // Escuchadores binarios de carga de planillas
     document.getElementById('fileVentas').addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
@@ -365,7 +364,6 @@
         return true;
     }
 
-    // MÓDULO 1: ENVIAR GASTO INDEPENDIENTE A LA NUBE
     function guardarGastoDiario() {
         if (!verificarURL()) return;
         
@@ -394,7 +392,6 @@
         .catch(err => alert("Error de red: " + err.message));
     }
 
-    // MÓDULO 2: PROCESAR EXCEL Y MATEMÁTICA DE COMISIONES
     function procesarArchivosMensuales() {
         const alertBox = document.getElementById("statusAlert");
         alertBox.className = "alert";
@@ -412,17 +409,16 @@
 
             ventaNetaCalculada = 0;
             comisionBaseCalculada = 0;
+            facturasAsociadasPeriodo = []; // Limpiamos las facturas en cada cálculo
 
-            // Índices estructurales físicos
-            const idxCodV = 15;   // P
-            const idxCantV = 19;  // T
-            const idxMontoV = 23; // X
-            const idxVendV = 40;  // AO
+            const idxFacturaV = 0; // Columna A para el número de factura
+            const idxCodV = 15;    // Columna P
+            const idxCantV = 19;   // Columna T
+            const idxMontoV = 23;  // Columna X
+            const idxVendV = 40;   // Columna AO
+            const idxCodP = 0;     // Columna A
+            const idxPrecioP = 4;  // Columna E
 
-            const idxCodP = 0;    // A
-            const idxPrecioP = 4; // E
-
-            // Indexar catálogo de precios de coste
             let catalogoProductos = {};
             for (let i = 1; i < datosProductosRaw.length; i++) {
                 let fila = datosProductosRaw[i];
@@ -438,12 +434,20 @@
                 if (!fila || fila[idxVendV] === undefined) continue;
 
                 let vdo = String(fila[idxVendV]).trim().toLowerCase();
-                // Búsqueda inteligente por tu coincidencia de nombre
+                
                 if (vdo.includes("antonio enrique mart")) {
                     encontrados++;
+                    let numFacturaRaw = String(fila[idxFacturaV]).trim();
                     let codigoProd = String(fila[idxCodV]).trim().toLowerCase();
                     let cantidad = parseFloat(fila[idxCantV]) || 0;
                     let montoItem = parseFloat(fila[idxMontoV]) || 0;
+
+                    // Extraer y agrupar la factura sin duplicarla
+                    if (numFacturaRaw !== "undefined" && numFacturaRaw !== "") {
+                        if (!facturasAsociadasPeriodo.includes(numFacturaRaw)) {
+                            facturasAsociadasPeriodo.push(numFacturaRaw);
+                        }
+                    }
 
                     ventaNetaCalculada += montoItem;
 
@@ -463,6 +467,7 @@
 
             document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
             document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
+            document.getElementById("valTotalFacturas").innerText = `${facturasAsociadasPeriodo.length} facturas vinculadas en este periodo`;
             
             actualizarCuadroTotalFinal();
             document.getElementById("resultadosSection").style.display = "block";
@@ -470,7 +475,6 @@
             alertBox.innerText = "¡Cruce de planillas finalizado! Ahora puedes importar tus gastos temporales.";
             alertBox.classList.add("alert-success");
 
-            // Intentar jalar automáticamente los gastos almacenados durante el mes
             importarGastosTemporalesDesdeDrive();
 
         } catch (err) {
@@ -479,7 +483,6 @@
         }
     }
 
-    // TRAER GASTOS TEMPORALES DESDE DRIVE AL PANEL DE CIERRE
     function importarGastosTemporalesDesdeDrive() {
         if (!verificarURL()) return;
 
@@ -530,13 +533,15 @@
         return "$" + val.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // CONSOLIDAR Y ENVIAR EL CIERRE COMPLETO AL HISTORIAL DEFINITIVO
     function guardarCierreDefinitivoEnDrive() {
         if (!verificarURL()) return;
 
-        // Empaquetar el array de gastos en una sola celda estructurada de texto para no romper columnas
         let detalleTextoCadena = listaAjustesExtras.map(x => `[${x.descripcion}: $${x.monto}]`).join(" ");
         if (detalleTextoCadena === "") detalleTextoCadena = "[Sin gastos registrados]";
+
+        // Convertimos el array de facturas a texto para Drive
+        let facturasCadena = facturasAsociadasPeriodo.join(", ");
+        if (facturasCadena === "") facturasCadena = "No se encontraron números";
 
         const totalExtras = obtenerSumatoriaExtras();
         const totalFinal = comisionBaseCalculada + totalExtras;
@@ -547,7 +552,8 @@
             comision_base: comisionBaseCalculada,
             total_ajustes: totalExtras,
             total_final: totalFinal,
-            detalle_gastos: detalleTextoCadena
+            detalle_gastos: detalleTextoCadena,
+            facturas_asociadas: facturasCadena
         };
 
         fetch(URL_GOOGLE_SCRIPT, {
@@ -558,30 +564,28 @@
         })
         .then(() => {
             alert("✅ ¡Cierre mensual guardado permanentemente en el historial de Drive! La lista de espera temporal ha sido limpiada automáticamente.");
-            // Limpiar interfaz
             document.getElementById("resultadosSection").style.display = "none";
             datosVentasRaw = null;
             datosProductosRaw = null;
             listaAjustesExtras = [];
+            facturasAsociadasPeriodo = [];
             document.getElementById("fileVentas").value = "";
             document.getElementById("fileProductos").value = "";
         })
         .catch(err => alert("Error de red: " + err.message));
     }
 
-    // MÓDULO 3: LLAMAR COMISIONES ANTIGUAS DESDE EL EXCEL
     function llamarHistorialAntiguo() {
         if (!verificarURL()) return;
 
         const tbody = document.querySelector("#tablaHistorial tbody");
-        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:blue;'>Buscando registros en Drive...</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:blue;'>Buscando registros en Drive...</td></tr>";
 
         fetch(URL_GOOGLE_SCRIPT + "?action=obtener_historial")
         .then(res => res.json())
         .then(respuesta => {
             tbody.innerHTML = "";
             if (respuesta.status === "success" && respuesta.data.length > 0) {
-                // Invertir el orden para mostrar el mes más reciente arriba del todo
                 respuesta.data.reverse().forEach(reg => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
@@ -591,15 +595,16 @@
                         <td style="text-align:right;">${formatearMoneda(reg.total_ajustes)}</td>
                         <td style="text-align:right; color:blue; font-weight:bold;">${formatearMoneda(reg.total_final)}</td>
                         <td style="font-size:11px; color:#555; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${reg.detalle}</td>
+                        <td style="font-size:11px; color:#1F4E78; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${reg.facturas}</td>
                     `;
                     tbody.appendChild(row);
                 });
             } else {
-                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:gray;'>No se encontraron cierres históricos guardados.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:gray;'>No se encontraron cierres históricos guardados.</td></tr>";
             }
         })
         .catch(err => {
-            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error al cargar el historial. Revisa los permisos de Apps Script.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>Error al cargar el historial. Revisa los permisos de Apps Script.</td></tr>";
             alert("Error de conexión: " + err.message);
         });
     }
