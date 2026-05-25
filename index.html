@@ -313,7 +313,7 @@
     let datosProductosRaw = null;
     let comisionBaseCalculada = 0;
     let ventaNetaCalculada = 0;
-    let gananciaNetaCalculada = 0; // Nueva variable para la utilidad de la empresa
+    let gananciaNetaCalculada = 0;
     let listaAjustesExtras = [];
     let facturasAsociadasPeriodo = [];
 
@@ -397,6 +397,19 @@
         .catch(err => alert("Error de red: " + err.message));
     }
 
+    // NUEVA FUNCIÓN: Fuerza cualquier celda dañada o con formato de texto a convertirse en un número puro real.
+    function extraerNumero(valor) {
+        if (typeof valor === 'number') return valor;
+        if (!valor || String(valor).trim() === "") return 0;
+        
+        let texto = String(valor).trim();
+        texto = texto.replace(/\$/g, '').replace(/\s/g, ''); // Quita signo peso y espacios
+        texto = texto.replace(/\./g, '').replace(/,/g, '.'); // Formato chileno: borra punto de miles, cambia coma a punto decimal
+        
+        let num = parseFloat(texto);
+        return isNaN(num) ? 0 : num;
+    }
+
     function procesarArchivosMensuales() {
         const alertBox = document.getElementById("statusAlert");
         alertBox.className = "alert";
@@ -414,7 +427,7 @@
 
             ventaNetaCalculada = 0;
             comisionBaseCalculada = 0;
-            gananciaNetaCalculada = 0; // Reiniciamos la utilidad en cada cálculo
+            gananciaNetaCalculada = 0; 
             facturasAsociadasPeriodo = [];
 
             const idxFacturaV = 0; // Columna A
@@ -430,7 +443,7 @@
                 let fila = datosProductosRaw[i];
                 if (fila && fila[idxCodP] !== undefined) {
                     let codigo = String(fila[idxCodP]).trim().toLowerCase();
-                    catalogoProductos[codigo] = parseFloat(fila[idxPrecioP]) || 0;
+                    catalogoProductos[codigo] = extraerNumero(fila[idxPrecioP]); // <-- Ahora lee el costo real
                 }
             }
 
@@ -445,8 +458,9 @@
                     encontrados++;
                     let numFacturaRaw = String(fila[idxFacturaV]).trim();
                     let codigoProd = String(fila[idxCodV]).trim().toLowerCase();
-                    let cantidad = parseFloat(fila[idxCantV]) || 0;
-                    let montoItem = parseFloat(fila[idxMontoV]) || 0;
+                    
+                    let cantidad = extraerNumero(fila[idxCantV]); // <-- Convierte la cantidad a número puro
+                    let montoItem = extraerNumero(fila[idxMontoV]); // <-- Convierte la venta a número puro
 
                     if (numFacturaRaw !== "undefined" && numFacturaRaw !== "") {
                         if (!facturasAsociadasPeriodo.includes(numFacturaRaw)) {
@@ -460,7 +474,7 @@
                         let costoUnitario = catalogoProductos[codigoProd];
                         let gananciaFila = montoItem - (costoUnitario * cantidad);
                         
-                        gananciaNetaCalculada += gananciaFila; // Sumamos a la utilidad total
+                        gananciaNetaCalculada += gananciaFila; 
                         comisionBaseCalculada += (gananciaFila * pct);
                     }
                 }
@@ -472,7 +486,6 @@
                 return;
             }
 
-            // Actualizamos la pantalla con los 3 valores
             document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
             document.getElementById("valGananciaNeta").innerText = formatearMoneda(gananciaNetaCalculada);
             document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
