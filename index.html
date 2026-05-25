@@ -251,6 +251,10 @@
                 <div class="metric-title">Venta Neta Total</div>
                 <div id="valVentaNeta" class="metric-value">$0.00</div>
             </div>
+            <div class="metric-card" style="border-left-color: #9C27B0;">
+                <div class="metric-title">Ganancia Neta (Utilidad)</div>
+                <div id="valGananciaNeta" class="metric-value">$0.00</div>
+            </div>
             <div class="metric-card" style="border-left-color: #4CAF50;">
                 <div class="metric-title">Comisión Base</div>
                 <div id="valComisionBase" class="metric-value">$0.00</div>
@@ -302,15 +306,16 @@
 </div>
 
 <script>
-    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbxEvyqmbHaaKBW0ajSLEwiOJ3tRYPFWs2v8zkQkpmknfHwcFhb8am6uvT-9UEicv6iN/exec"; 
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycby49hKtUT-JbSojGpXvpxDMq_K522OyQqVqLLazpaZEtXQnXUXvvUzUmaUtJm06x2e3/exec"; 
     
     // Memoria volátil de la aplicación
     let datosVentasRaw = null;
     let datosProductosRaw = null;
     let comisionBaseCalculada = 0;
     let ventaNetaCalculada = 0;
+    let gananciaNetaCalculada = 0; // Nueva variable para la utilidad de la empresa
     let listaAjustesExtras = [];
-    let facturasAsociadasPeriodo = []; // Nueva lista de recolección de facturas
+    let facturasAsociadasPeriodo = [];
 
     function login() {
         const pass = document.getElementById("passwordField").value.trim();
@@ -409,9 +414,10 @@
 
             ventaNetaCalculada = 0;
             comisionBaseCalculada = 0;
-            facturasAsociadasPeriodo = []; // Limpiamos las facturas en cada cálculo
+            gananciaNetaCalculada = 0; // Reiniciamos la utilidad en cada cálculo
+            facturasAsociadasPeriodo = [];
 
-            const idxFacturaV = 0; // Columna A para el número de factura
+            const idxFacturaV = 0; // Columna A
             const idxCodV = 15;    // Columna P
             const idxCantV = 19;   // Columna T
             const idxMontoV = 23;  // Columna X
@@ -442,7 +448,6 @@
                     let cantidad = parseFloat(fila[idxCantV]) || 0;
                     let montoItem = parseFloat(fila[idxMontoV]) || 0;
 
-                    // Extraer y agrupar la factura sin duplicarla
                     if (numFacturaRaw !== "undefined" && numFacturaRaw !== "") {
                         if (!facturasAsociadasPeriodo.includes(numFacturaRaw)) {
                             facturasAsociadasPeriodo.push(numFacturaRaw);
@@ -454,6 +459,8 @@
                     if (catalogoProductos[codigoProd] !== undefined) {
                         let costoUnitario = catalogoProductos[codigoProd];
                         let gananciaFila = montoItem - (costoUnitario * cantidad);
+                        
+                        gananciaNetaCalculada += gananciaFila; // Sumamos a la utilidad total
                         comisionBaseCalculada += (gananciaFila * pct);
                     }
                 }
@@ -465,7 +472,9 @@
                 return;
             }
 
+            // Actualizamos la pantalla con los 3 valores
             document.getElementById("valVentaNeta").innerText = formatearMoneda(ventaNetaCalculada);
+            document.getElementById("valGananciaNeta").innerText = formatearMoneda(gananciaNetaCalculada);
             document.getElementById("valComisionBase").innerText = formatearMoneda(comisionBaseCalculada);
             document.getElementById("valTotalFacturas").innerText = `${facturasAsociadasPeriodo.length} facturas vinculadas en este periodo`;
             
@@ -539,7 +548,6 @@
         let detalleTextoCadena = listaAjustesExtras.map(x => `[${x.descripcion}: $${x.monto}]`).join(" ");
         if (detalleTextoCadena === "") detalleTextoCadena = "[Sin gastos registrados]";
 
-        // Convertimos el array de facturas a texto para Drive
         let facturasCadena = facturasAsociadasPeriodo.join(", ");
         if (facturasCadena === "") facturasCadena = "No se encontraron números";
 
